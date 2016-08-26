@@ -63,91 +63,17 @@ class Castnet:
 
     # Unique requests
 	locations_by_uid = {}
-	size_by_uid = {}
-
-	visited = []
-	for req in self.amap:
-		if req['uid'] in visited:
-			latitude = float(req['loc'].split(',')[0])
-			longitude =  float(req['loc'].split(',')[1])
-			locations_by_uid[req['uid']].append((latitude, longitude))
-			size_by_uid[req['uid']].append(int(req['size']))
-		else:
-			n_loclist = []
-			n_sizelist = []
-			latitude = float(req['loc'].split(',')[0])
-			longitude =  float(req['loc'].split(',')[1])
-			n_loclist.append((latitude, longitude))
-			n_sizelist.append(int(req['size']))
-			locations_by_uid[req['uid']] = n_loclist
-			size_by_uid[req['uid']] = n_sizelist
-			visited.append(req['uid'])
-	
-	#print len(size_by_uid), len(locations_by_uid)	
-	for key in locations_by_uid.keys():
-		locations_by_uid[key] = self.weighted_spherical_mean_helper(sum(size_by_uid[key]), size_by_uid[key],locations_by_uid[key])
-	#print locations_by_uid
 	return locations_by_uid
 
   # PHASE 2: Iteratively Move Data to Reduce Latency
   def adjust(self, locations_by_uid):
+	locations_by_uid[uid] = location
 
-    for i in range(INTERDEPENDENCY_ITERATIONS):
-		uuid_to_interdependencies = []
-		for uid, location in locations_by_uid.items():
-		# Find a count for unique uuids a uuid is interdependent with, and how many requests for each interdependent request are made
-			uid_count = 0
-			visited = []
-			req_count = 0
-			for req in self.amap:
-				if uid == req['dep']:
-					if uid not in visited:
-						uid_count = uid_count +1
-						visited.append(uid)
-				req_count = req_count +1
-
-			uuid_to_interdependencies.append( (uid_count, req_count))
-			#self.log_manager.get_interdependency_grouped_by_uuid(uuid)
-
-		for tuple in uuid_to_interdependencies:
-			other_item_uuid = tuple[0]
-			other_item_location = locations_by_uid[other_item_uuid]
-			request_count = tuple[1]
-			distance = util.get_distance(location, other_item_location)
-			weight = 1 / (1 + (KAPPA * distance * request_count))
-			location = self.interp(weight, location, other_item_location)
-
-		locations_by_uid[uid] = location
-
-    return locations_by_uid
+	return locations_by_uid
 
   # PHASE 3: Iteratively Collapse Data to Datacenters
   def sink(self, locations_by_uid):
 	placements_by_server = {}
-	for server in self.imap:
-		placements_by_server[server] = []
-
-	for uid, location in locations_by_uid.iteritems():
-		metadata = {'current_server': None, 'optimal_location': location, 'uuid': uid, 'dist': None, 'file_size': None, 'request_count': None}
-		best_server = None
-		
-		metadata['current_server'] = location
-		req_count = 0
-		for req in self.amap:
-			if req['uid'] == uid:
-				metadata['file_size'] = req['size']
-				req_count = req_count + 1
-		metadata['request_count'] = req_count
-		
-
-		best_servers = self.find_closest_servers(location)
-		best_server = best_servers[0]
-		metadata['dist'] = best_server['distance']
-		
-		self.uuid_metadata[uid] = metadata
-		placements_by_server[best_server['server']].append(uid)
-
-		placements_by_server = self.redistribute_server_data_by_capacity(placements_by_server)
 	return placements_by_server
 
   # PHASE 4: Call migration methods on each server
@@ -212,44 +138,6 @@ class Castnet:
     space_remaining = {}
     servers_with_capacity = set()
     servers_over_capacity = set()
-
-    for server in self.imap:
-      space_remaining[server] = self.total_server_capacity(server)
-
-      placements = placements_by_server[server]
-
-      for uuid in placements:
-        metadata = self.uuid_metadata[uuid]
-        space_remaining[server] -= metadata['file_size']
-
-      if space_remaining[server] > 0:
-        servers_with_capacity.add(server)
-      else:
-        servers_over_capacity.add(server)
-
-    for server in servers_over_capacity:
-      placements = placements_by_server[server]
-      placements.sort(key=self.get_sort_key_by_request_count)
-
-      # move top uuids to nearest locations (or second-nearest, etc if other servers are full)
-      # until server is no longer over capacity
-      while space_remaining[server] < 0:
-        uuid = placements.pop()
-        metadata = self.uuid_metadata[uuid]
-        best_servers = self.find_closest_servers(metadata['optimal_location'], servers_with_capacity)
-
-        for i, best_server_info in enumerate(best_servers):
-          best_server = best_server_info['server']
-          if space_remaining[best_server] >= metadata['file_size']:
-            space_remaining[best_server] -= metadata['file_size']
-            placements_by_server[best_server].append(uuid)
-            break
-          if i == (len(best_servers) - 1):   # haven't found a server on the last iteration
-            raise ValueError("There is too much data for the servers' storage capacity to handle.")
-
-        space_remaining[server] += metadata['file_size']
-
-        print 'PLACEMENTS: ' + str(placements)
 
     return placements_by_server
 
@@ -335,12 +223,12 @@ class Castnet:
 
     return (lat_c, lng_c)
 
-  # Recursive helper for weighted_spherical_mean
+  # weighted_spherical_mean
   #
   # params:
   #   weights: a list of weights
   #   locations: a list of latitude/longitude tuples for clients, has same cardinality as weights
-  def weighted_spherical_mean_helper(self, total_weight, weights, locations):
+  def weighted_spherical_mean(self, total_weight, weights, locations):
     if len(weights) != len(locations):
       raise ValueError('Weights and locations must have the same length.')
 
@@ -360,16 +248,4 @@ class Castnet:
     if length == 1:
       return location
 
-    return self.interp(weight, location, self.weighted_spherical_mean_helper(total_weight, weights, locations))
-
-  # Find the weighted spherical mean location for a data item
-  #
-  # params:
-  #   uuid: uuid of the data item
-  def weighted_spherical_mean(self, location_by_uid, uid):
-   
-	weights = []
-	locations = []
-
-	total_weight = float(sum(weights))
-	return self.weighted_spherical_mean_helper(total_weight, weights, locations)
+    return self.interp(weight, location, self.weighted_spherical_mean(total_weight, weights, locations))

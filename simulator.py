@@ -90,12 +90,6 @@ def parse_args():
 	args = vars(parser.parse_args())
 	return args
 
-def dump_amap(amap, index):
-	dump_name = 'amaps/map_' + str(index)
-	with open(dump_name, 'wt') as amap_dump:
-		json.dump(amap,amap_dump)
-	print "written amap in ", 'amaps/amap_' + str(index)
-
 if __name__ == '__main__':
 	args = parse_args()
 	if debug:
@@ -106,9 +100,6 @@ if __name__ == '__main__':
 	if '.ini' in args['amap']:
 		amaps = create_amaps(args['amap'], imap)
 		count = 0
-		for amap in amaps:
-			dump_amap(amap, count)
-		count = count + 1
 	else:
 		amaps=load_amap(args['amap'])
 		print "Loaded amap !"

@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-
+import json
 import matplotlib.pyplot as plt
 #import scipy.special as sps
 
@@ -31,7 +31,8 @@ class Generator:
 
 	def show(self,s, dist):
 		if dist == 'random':
-			plt.plot(range(0, len(s), s))
+			x = range(0,len(s))
+			plt.scatter(x, s)
 			plt.show()
 		elif dist == 'gaussian':
 			mu = 1
@@ -55,7 +56,13 @@ class Generator:
 		print "Number of i locations: ", l_imap
 		amap = []		
 		nb_uuids = (int(sf)*l_imap)/int(rf)
-		
+		print "Generating for conf: "
+		print "Spatial: " + sd +'_' + sf
+		print "Temporal: "+ td +'_' + tf
+		print "Size: "+zd +'_' + zf
+		print "Dependency: "+dd +'_' + df
+		print "Redundancy: "+rd +'_' + rf
+
 		loc_indexes = []
 		if sd == 'random':
 			loc_indexes = np.random.randint(0,l_imap, int(sf) * l_imap)
@@ -71,11 +78,13 @@ class Generator:
 			print "Unsupported spatial distribution"
 			exit()
 
-		self.show(loc_indexes,sd)
+		show_distributions= False
+		if(show_distributions):
+			self.show(loc_indexes,sd)
 
 		timestamps = []
 		if td == 'random':
-			timstamps = np.random.randint(0, 86400, int(sf)*l_imap)
+			timestamps = np.random.randint(0, 86400, int(sf)*l_imap)
 		elif td == 'gaussian':
 			timestamps = np.random.normal(1, 1, int(sf) * l_imap)
 			offset = abs(np.min(timestamps))
@@ -108,10 +117,10 @@ class Generator:
 			sizes = np.random.normal(1,1,nb_uuids)
 			offset = abs(np.min(sizes))
 			sizes = np.add(sizes, offset+1)
-			sizes = np.remainer(sizes,int(zf))
+			sizes = np.remainder(sizes,int(zf))
 		elif zd == 'zipfian':
 			sizes = np.random.zipf(2, nb_uuids)
-			sizes = np.remainer(sizes,int(zf))
+			sizes = np.remainder(sizes,int(zf))
 			sizes = np.add(sizes,1)
 		else:
 			print "Unsupported size dstribution"
@@ -134,7 +143,7 @@ class Generator:
 		assigned = {}
 		for i in range(0, int(sf)*l_imap):
 			line = {}
-
+			#print i
 			line['loc'] = self.imap[int(loc_indexes[i])]
 
 			line['time'] = int(timestamps[i])
@@ -152,8 +161,17 @@ class Generator:
 		for line in amap:
 			if line['dep'] not in uuids:
 				print "You messed up something - dependency is not another request"
-		
+
+		self.dump_amap(amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf)		
+
 		# add uids & size
 		self.ticking()
 		return amap
+
+	def dump_amap(self, amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf):
+		dump_name = 'amaps/amap_' + sd[0]+sf+td[0]+tf+zd[0]+zf[0]+dd[0]+df+rd[0]+rf
+		with open(dump_name, 'wt') as amap_dump:
+			json.dump(amap,amap_dump)
+		print "written amap in ", dump_name
+
 

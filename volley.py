@@ -35,15 +35,15 @@ class Volley:
 	print "------------------------------------"
 	print "Initial placement Phase 1"
 	locations_by_uid = self.place_initial()
-	print locations_by_uid
+#	print locations_by_uid
 	print "------------------------------------"
 	print "Phase 2 placement"
 	locations_by_uid = self.reduce_latency(locations_by_uid)
-	print locations_by_uid
+#	print locations_by_uid
 	print "------------------------------------"
 	print "Phase 3 final placement"
 	placements_by_server = self.collapse_to_datacenters(locations_by_uid)
-	print placements_by_server
+#	print placements_by_server
 	print "------------------------------------"
 	self.migrate_to_locations(placements_by_server)
 	print 'Volley execute() >>'

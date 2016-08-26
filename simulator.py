@@ -94,7 +94,7 @@ def dump_amap(amap, index):
 	dump_name = 'amaps/map_' + str(index)
 	with open(dump_name, 'wt') as amap_dump:
 		json.dump(amap,amap_dump)
-	print "written amap in ", 'amap_' + str(index)
+	print "written amap in ", 'amaps/amap_' + str(index)
 
 if __name__ == '__main__':
 	args = parse_args()

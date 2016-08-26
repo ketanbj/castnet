@@ -66,7 +66,7 @@ class Generator:
 		elif sd == 'zipfian':
 			loc_indexes = np.random.zipf(2,int(sf)*l_imap)
 			loc_indexes = np.remainder(loc_indexes,l_imap-1)
-			print loc_indexes
+			#print loc_indexes
 		else:
 			print "Unsupported spatial distribution"
 			exit()
@@ -103,15 +103,16 @@ class Generator:
 		
 		sizes = []
 		if zd == 'random':
-			sizes = np.random.randint(0,int(zf), nb_uuids)
+			sizes = np.random.randint(1,int(zf), nb_uuids)
 		elif zd == 'gaussian':
 			sizes = np.random.normal(1,1,nb_uuids)
 			offset = abs(np.min(sizes))
-			sizes = np.add(sizes, offset)
+			sizes = np.add(sizes, offset+1)
 			sizes = np.remainer(sizes,int(zf))
 		elif zd == 'zipfian':
 			sizes = np.random.zipf(2, nb_uuids)
 			sizes = np.remainer(sizes,int(zf))
+			sizes = np.add(sizes,1)
 		else:
 			print "Unsupported size dstribution"
 			exit()
@@ -148,6 +149,10 @@ class Generator:
 				assigned[uuids[i]] = (int(sizes[i % nb_uuids]), uuids[int(deps_index[i % nb_uuids])])
 			amap.append(line)
 
+		for line in amap:
+			if line['dep'] not in uuids:
+				print "You messed up something - dependency is not another request"
+		
 		# add uids & size
 		self.ticking()
 		return amap

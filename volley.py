@@ -95,8 +95,7 @@ class Volley:
 						uid_count = uid_count +1
 						visited.append(uid)
 				req_count = req_count +1
-
-			uuid_to_interdependencies.append( (uid_count, req_count))
+			uuid_to_interdependencies.append( (uid, req_count))
 			#self.log_manager.get_interdependency_grouped_by_uuid(uuid)
 
 		for tuple in uuid_to_interdependencies:

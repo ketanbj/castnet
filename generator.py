@@ -6,12 +6,12 @@ import json
 import matplotlib.pyplot as plt
 #import scipy.special as sps
 
-
 class Generator:
 
 	def __init__(self, imap):
 		self.imap = imap
 		self.debug = False
+		self.zipf_distr_param = 4
 
 	def ticking(self):
 		sys.stdout.write("/")
@@ -30,6 +30,27 @@ class Generator:
 		sys.stdout.flush()
 		sys.stdout.write("\r")
  		sys.stdout.flush()
+
+	def create_random_point(self, str_loc):
+		distance = 35405. #typical range of cell tower
+		x0 = float(str_loc.split(',')[0])
+		y0 = float(str_loc.split(',')[1])
+		#print x0
+		#print y0
+		r = distance/ 111300
+		#print r
+		u = np.random.uniform(0,1)
+		v = np.random.uniform(0,1)
+		w = r * np.sqrt(u)
+		t = 2 * np.pi * v
+		x = w * np.cos(t)
+		x1 = x / np.cos(y0)
+		y = w * np.sin(t)
+		#print x
+		#print y
+		res =  str(x0+x1)+','+ str(y0+y)
+		#print res
+		return res
 
 	def show(self,s, dist):
 		if dist == 'random':
@@ -74,7 +95,7 @@ class Generator:
 			offset = abs(np.min(loc_indexes))
 			s_indexes = np.add(loc_indexes, offset)
 		elif sd == 'zipfian':
-			loc_indexes = np.random.zipf(2,int(sf)*l_imap)
+			loc_indexes = np.random.zipf(self.zipf_distr_param,int(sf)*l_imap)
 			loc_indexes = np.remainder(loc_indexes,l_imap-1)
 			#print loc_indexes
 		else:
@@ -94,7 +115,7 @@ class Generator:
 			timestamps = np.add(timestamps, offset)
 			timestamps = np.remainder(timestamps, 86400)
 		elif td == 'zipfian':
-			timestamps = np.random.zipf(2, int(sf) * l_imap)
+			timestamps = np.random.zipf(self.zipf_distr_param, int(sf) * l_imap)
 			timestamps = np.remainder(timestamps, 86400) 
 		else:
 			print "Unsupported temporal distribution"	
@@ -108,7 +129,7 @@ class Generator:
 			offset = abs(np.min(uuids))
 			uuids = np.add(uuids, offset)
 		elif rd == 'zipfian':
-			uuids = np.random.zipf(2, nb_uuids)
+			uuids = np.random.zipf(self.zipf_distr_param, nb_uuids)
 		else:
 			print "Unsupported redundancy dstribution"
 			exit()
@@ -122,7 +143,7 @@ class Generator:
 			sizes = np.add(sizes, offset+1)
 			sizes = np.remainder(sizes,int(zf))
 		elif zd == 'zipfian':
-			sizes = np.random.zipf(2, nb_uuids)
+			sizes = np.random.zipf(self.zipf_distr_param, nb_uuids)
 			sizes = np.remainder(sizes,int(zf))
 			sizes = np.add(sizes,1)
 		else:
@@ -137,7 +158,7 @@ class Generator:
 			offset = abs(np.min(deps_index))
 			deps_index = np.add(deps_index, offset)
 		elif dd == 'zipfian':
-			deps_index = np.random.zipf(2, nb_uuids)
+			deps_index = np.random.zipf(self.zipf_distr_param, nb_uuids)
 			deps_index = np.remainder(deps_index, nb_uuids)
 		else:
 			print "Unsupported dependency dstribution"
@@ -147,18 +168,18 @@ class Generator:
 		for i in range(0, int(sf)*l_imap):
 			line = {}
 			#print i
-			line['loc'] = self.imap[int(loc_indexes[i])]
+			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i])])
 
 			line['time'] = int(timestamps[i])
 			
 			line['uid'] = int(uuids[i%nb_uuids])
-			if uuids[i] in assigned.keys():
-				line['size'] = assigned[uuids[i]][0]
-				line['dep'] = assigned[uuids[i]][1]
+			if uuids[i % nb_uuids] in assigned.keys():
+				line['size'] = assigned[uuids[i % nb_uuids]][0]
+				line['dep'] = assigned[uuids[i % nb_uuids]][1]
 			else:
 				line['size'] = int(sizes[i % nb_uuids])
 				line['dep'] = uuids[int(deps_index[i % nb_uuids])]
-				assigned[uuids[i]] = (int(sizes[i % nb_uuids]), uuids[int(deps_index[i % nb_uuids])])
+				assigned[uuids[i % nb_uuids]] = (int(sizes[i % nb_uuids]), uuids[int(deps_index[i % nb_uuids])])
 			amap.append(line)
 
 		for line in amap:

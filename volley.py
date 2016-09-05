@@ -3,8 +3,6 @@ import geopy
 import json
 import math
 import os
-import requests
-import sqlite3
 import sys
 import time
 import urllib

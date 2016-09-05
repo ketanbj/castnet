@@ -7,15 +7,14 @@ import numpy as np
 import pickle
 import json
 import pprint as pp
-
+import timeit as tt
+import sys
 
 from generator import Generator
 from volley import Volley
 from greedy import Greedy
 from central_greedy import CentralizedGreedy
-import greedy
-import distributed
-import castnet
+from distributed_greedy import DistributedGreedy
 
 verbose = True
 debug = True
@@ -92,10 +91,14 @@ def parse_args():
 
 if __name__ == '__main__':
 	args = parse_args()
-	if debug:
-		print args
+	print args
+
+	import sys
+	sys.setrecursionlimit(10000)
 
 	imap = load_imap(args['imap'])
+
+	start_time = time.time()
 
 	if '.ini' in args['amap']:
 		amaps = create_amaps(args['amap'], imap)
@@ -104,29 +107,33 @@ if __name__ == '__main__':
 		amaps=load_amap(args['amap'])
 		print "Loaded amap !"
 
+	end_time = time.time()
+
+	print "WLGEN: ", end_time - start_time
+
 	for amap in amaps:
-		print "Number of requests in amap: ", len(amap)
+		#print "Number of requests in amap: ", len(amap)
 		#print amap
 		algo = None
 		if args['algo'] == 'volley':
-			print "Using Volley algorithm ..."
+			#print "Using Volley algorithm ..."
 			algo = Volley(imap, amap)
 		elif args['algo'] == 'greedy':
-			print "using greedy algorithm ..."
-			algo = Greedy(imap, amap)
+			#print "using greedy algorithm ..."
+			algo = DistributedGreedy(imap, amap)
 		elif args['algo'] == 'cgreedy':
-			print "using centralized greedy algorithm ..."
+			#print "using centralized greedy algorithm ..."
 			algo = CentralizedGreedy(imap, amap)
 		elif args['algo'] == 'distributed':
-			print "using distributed algorithm ..."
+			#print "using distributed algorithm ..."
 			algo = Distributed(imap, amap)
 		elif args['algo'] == 'castnet':
-			print "Using castnet algorithm ..."
+			#print "Using castnet algorithm ..."
 			algo = Castnet(imap, amap, budget)
 		else:
 			print "Don't know how we reached here"
 
-		start_time = int(time.time())
+		start_time = time.time()
 		algo.execute()
-		end_time = int(time.time())
-		print "Execution time: ", end_time - start_time
+		end_time = time.time()
+		print "EXE: ", (end_time - start_time)*1000

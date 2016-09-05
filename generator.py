@@ -6,10 +6,12 @@ import json
 import matplotlib.pyplot as plt
 #import scipy.special as sps
 
+
 class Generator:
 
 	def __init__(self, imap):
 		self.imap = imap
+		self.debug = False
 
 	def ticking(self):
 		sys.stdout.write("/")
@@ -41,7 +43,7 @@ class Generator:
 			plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
 			plt.show()
 		elif dist == 'zipfian':
-			print "Some issue with scipy import"
+			#print "Some issue with scipy import"
 			return
 			#a =2
 			#count, bins, ignored = plt.hist(s[s<50], 50)
@@ -53,15 +55,16 @@ class Generator:
 	def generate_amap(self, sd,sf,td,tf,zd,zf,dd,df,rd,rf):
 
 		l_imap = len(self.imap)
-		print "Number of i locations: ", l_imap
+		#print "Number of i locations: ", l_imap
 		amap = []		
 		nb_uuids = (int(sf)*l_imap)/int(rf)
-		print "Generating for conf: "
-		print "Spatial: " + sd +'_' + sf
-		print "Temporal: "+ td +'_' + tf
-		print "Size: "+zd +'_' + zf
-		print "Dependency: "+dd +'_' + df
-		print "Redundancy: "+rd +'_' + rf
+		if(self.debug):
+			print "Generating for conf: "
+			print "Spatial: " + sd +'_' + sf
+			print "Temporal: "+ td +'_' + tf
+			print "Size: "+zd +'_' + zf
+			print "Dependency: "+dd +'_' + df
+			print "Redundancy: "+rd +'_' + rf
 
 		loc_indexes = []
 		if sd == 'random':
@@ -148,7 +151,7 @@ class Generator:
 
 			line['time'] = int(timestamps[i])
 			
-			line['uid'] = int(uuids[i])
+			line['uid'] = int(uuids[i%nb_uuids])
 			if uuids[i] in assigned.keys():
 				line['size'] = assigned[uuids[i]][0]
 				line['dep'] = assigned[uuids[i]][1]
@@ -165,13 +168,13 @@ class Generator:
 		self.dump_amap(amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf)		
 
 		# add uids & size
-		self.ticking()
+		#self.ticking()
 		return amap
 
 	def dump_amap(self, amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf):
 		dump_name = 'amaps/amap_' + sd[0]+sf+td[0]+tf+zd[0]+zf[0]+dd[0]+df+rd[0]+rf
 		with open(dump_name, 'wt') as amap_dump:
 			json.dump(amap,amap_dump)
-		print "written amap in ", dump_name
+		#print "written amap in ", dump_name
 
 

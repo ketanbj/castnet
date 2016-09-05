@@ -1,4 +1,6 @@
 #!/bin/bash
 
-python simulator.py --algo=volley --imap=./imap --amap=./amap
-#python simulator.py --algo=volley --imap=./cellular_tower_locations_FCC.txt --amap=./amap
+python simulator.py --algo=cgreedy --imap=imaps/imap_1000 --amap=./amap.ini
+
+#python simulator.py --algo=volley --imap=imaps/imap_100 --amap=./amap.ini
+

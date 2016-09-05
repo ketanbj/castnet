@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.join(up_one_dir, 'cache'))
 sys.path.insert(0, os.path.join(up_one_dir, 'aggregator'))
 import util
 
+debug = False
+
 # Configurable Constants
 INTERDEPENDENCY_ITERATIONS = 5
 KAPPA = 0.5
@@ -28,25 +30,22 @@ class Volley:
 	self.imap = imap
 	self.amap = amap
 	self.uuid_metadata = {}
+	self.debug = False
 
   # Execute Volley algorithm
   def execute(self):
-	print "Volley.execute() <<"
-	print "------------------------------------"
-	print "Initial placement Phase 1"
+	if(self.debug):
+		print "Initial placement Phase 1"
 	locations_by_uid = self.place_initial()
-#	print locations_by_uid
-	print "------------------------------------"
-	print "Phase 2 placement"
+	if(self.debug):
+		print "Phase 2 placement"
 	locations_by_uid = self.reduce_latency(locations_by_uid)
-#	print locations_by_uid
-	print "------------------------------------"
-	print "Phase 3 final placement"
+	if(self.debug):
+		print "Phase 3 final placement"
 	placements_by_server = self.collapse_to_datacenters(locations_by_uid)
-#	print placements_by_server
-	print "------------------------------------"
+	if(self.debug):
+		print "Phase 4 migrate to loactions"
 	self.migrate_to_locations(placements_by_server)
-	print 'Volley execute() >>'
 
   # PHASE 1: Compute Initial Placement
   def place_initial(self):
@@ -141,14 +140,10 @@ class Volley:
 
   # PHASE 4: Call migration methods on each server
   def migrate_to_locations(self, placements_by_server):
-	print "Implement actual migration here"
+	if(self.debug):
+		print "Implement actual migration here"
 	return
 
-
-  # PHASE 4: Call migration methods on each server
-  def migrate_to_locations(self, placements_by_server):
-	print "Implement actual migration here"
-	return
 
   # Gets sort key for sort function to sort by ascending request_count
   def get_sort_key_by_request_count(self, uuid):
@@ -191,7 +186,7 @@ class Volley:
   #   server: hostname of server to check
   def total_server_capacity(self, server):
 	#FIXME: variable storage capacity to be loaded from imap
-	return 5242880
+	return 52428800000
 
   # Check capacity and redistribute data to each server
   #
@@ -238,7 +233,7 @@ class Volley:
 
         space_remaining[server] += metadata['file_size']
 
-        print 'PLACEMENTS: ' + str(placements)
+        #print 'PLACEMENTS: ' + str(placements)
 
     return placements_by_server
 
@@ -294,35 +289,36 @@ class Volley:
   #   loc_a: lat/lng for location A
   #   loc_b: lat/lng for location B
   def interp(self, weight, loc_a, loc_b):
-    lat_a = self.convert_lat_to_radians(loc_a[0])
-    lng_a = self.convert_lng_to_radians(loc_a[1])
-    lat_b = self.convert_lat_to_radians(loc_b[0])
-    lng_b = self.convert_lng_to_radians(loc_b[1])
+ 	lat_a = self.convert_lat_to_radians(loc_a[0])
+	lng_a = self.convert_lng_to_radians(loc_a[1])
+	lat_b = self.convert_lat_to_radians(loc_b[0])
+	lng_b = self.convert_lng_to_radians(loc_b[1])
 
-    d_first = math.cos(lat_a) * math.cos(lat_b)
-    d_second = math.sin(lat_a) * math.sin(lat_b) * math.cos(lng_b - lng_a)
-    d = math.acos(d_first + d_second)
+	d_first = math.cos(lat_a) * math.cos(lat_b)
+	d_second = math.sin(lat_a) * math.sin(lat_b) * math.cos(lng_b - lng_a)
+	
+	d = math.acos(round(d_first + d_second,6))
 
-    gamma_numerator = math.sin(lat_b) * math.sin(lat_a) * math.sin(lng_b - lng_a)
-    gamma_denominator = math.cos(lat_a) - (math.cos(d) * math.cos(lat_b))
-    gamma = math.atan2(gamma_numerator, gamma_denominator)
+	gamma_numerator = math.sin(lat_b) * math.sin(lat_a) * math.sin(lng_b - lng_a)
+	gamma_denominator = math.cos(lat_a) - (math.cos(d) * math.cos(lat_b))
+	gamma = math.atan2(gamma_numerator, gamma_denominator)
 
-    beta_numerator = math.sin(lat_b) * math.sin(weight * d) * math.sin(gamma)
-    beta_denominator = math.cos(weight * d) - (math.cos(lat_a) * math.cos(lat_b))
-    beta = math.atan2(beta_numerator, beta_denominator)
+	beta_numerator = math.sin(lat_b) * math.sin(weight * d) * math.sin(gamma)
+	beta_denominator = math.cos(weight * d) - (math.cos(lat_a) * math.cos(lat_b))
+	beta = math.atan2(beta_numerator, beta_denominator)
 
-    lat_c_first = math.cos(weight * d) * math.cos(lat_b)
-    lat_c_second = math.sin(weight * d) * math.sin(lat_b) * math.cos(gamma)
-    lat_c = math.acos(lat_c_first + lat_c_second)
-    lat_c = self.convert_lat_to_degrees(lat_c)
+	lat_c_first = math.cos(weight * d) * math.cos(lat_b)
+	lat_c_second = math.sin(weight * d) * math.sin(lat_b) * math.cos(gamma)
+	lat_c = math.acos(lat_c_first + lat_c_second)
+	lat_c = self.convert_lat_to_degrees(lat_c)
 
-    # Find an average of coming from either direction for antipodal nodes
-    lng_c_1 = lng_b - beta
-    lng_c_2 = lng_a + beta
-    lng_c = self.find_avg_lng(lng_c_1, lng_c_2)
-    lng_c = self.convert_lng_to_degrees(lng_c)
+	# Find an average of coming from either direction for antipodal nodes
+	lng_c_1 = lng_b - beta
+	lng_c_2 = lng_a + beta
+	lng_c = self.find_avg_lng(lng_c_1, lng_c_2)
+	lng_c = self.convert_lng_to_degrees(lng_c)
 
-    return (lat_c, lng_c)
+	return (lat_c, lng_c)
 
   # Recursive helper for weighted_spherical_mean
   #
@@ -335,10 +331,6 @@ class Volley:
 
     length = len(weights)
 
-    # print '------ Weighted spherical mean -------- '
-    # print 'Length: ' + str(length)
-    # print 'WEIGHTS: ' + str(weights)
-    # print 'LOCATIONS: ' + str(locations)
 
     current_weight = float(weights.pop())
     weight = current_weight / total_weight
@@ -348,6 +340,10 @@ class Volley:
 
     if length == 1:
       return location
+    # print '------ Weighted spherical mean -------- '
+    #print 'Length: ' + str(length)
+    #print 'WEIGHTS: ' + str(weights)
+    #print 'LOCATIONS: ' + str(locations)
 
     return self.interp(weight, location, self.weighted_spherical_mean_helper(total_weight, weights, locations))
 

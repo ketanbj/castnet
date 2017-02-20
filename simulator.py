@@ -110,7 +110,7 @@ if __name__ == '__main__':
 	end_time = time.time()
 
 	print "WLGEN: ", end_time - start_time
-
+	exit()
 	for amap in amaps:
 		#print "Number of requests in amap: ", len(amap)
 		#print amap

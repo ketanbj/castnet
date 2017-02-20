@@ -58,8 +58,8 @@ class Generator:
 			plt.scatter(x, s)
 			plt.show()
 		elif dist == 'gaussian':
-			mu = 1
-			sigma = 1
+			mu = 4
+			sigma = 0.5
 			count, bins, ignored = plt.hist(s,100)
 			plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (bins - mu)**2 / (2 * sigma**2) ),linewidth=2, color='r')
 			plt.show()
@@ -150,41 +150,41 @@ class Generator:
 			print "Unsupported size dstribution"
 			exit()
 		
-		deps_index = []
-		if dd == 'random':
-			deps_index = np.random.randint(0,nb_uuids, nb_uuids)
-		elif dd == 'gaussian':
-			deps_index = np.random.normal(1,1,nb_uuids)
-			offset = abs(np.min(deps_index))
-			deps_index = np.add(deps_index, offset)
-		elif dd == 'zipfian':
-			deps_index = np.random.zipf(self.zipf_distr_param, nb_uuids)
-			deps_index = np.remainder(deps_index, nb_uuids)
-		else:
-			print "Unsupported dependency dstribution"
-			exit()
+#		deps_index = []
+#		if dd == 'random':
+#			deps_index = np.random.randint(0,nb_uuids, nb_uuids)
+#		elif dd == 'gaussian':
+#			deps_index = np.random.normal(1,1,nb_uuids)
+#			offset = abs(np.min(deps_index))
+#			deps_index = np.add(deps_index, offset)
+#		elif dd == 'zipfian':
+#			deps_index = np.random.zipf(self.zipf_distr_param, nb_uuids)
+#			deps_index = np.remainder(deps_index, nb_uuids)
+#		else:
+#			print "Unsupported dependency dstribution"
+#			exit()
 		
 		assigned = {}
 		for i in range(0, int(sf)*l_imap):
 			line = {}
 			#print i
-			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i])])
+			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i % nb_uuids])])
 
-			line['time'] = int(timestamps[i])
+			line['time'] = int(timestamps[i % nb_uuids])
 			
-			line['uid'] = int(uuids[i%nb_uuids])
+			line['uid'] = int(uuids[i % nb_uuids])
 			if uuids[i % nb_uuids] in assigned.keys():
 				line['size'] = assigned[uuids[i % nb_uuids]][0]
-				line['dep'] = assigned[uuids[i % nb_uuids]][1]
+#				line['dep'] = assigned[uuids[i % nb_uuids]][1]
 			else:
 				line['size'] = int(sizes[i % nb_uuids])
-				line['dep'] = uuids[int(deps_index[i % nb_uuids])]
-				assigned[uuids[i % nb_uuids]] = (int(sizes[i % nb_uuids]), uuids[int(deps_index[i % nb_uuids])])
+#				line['dep'] = uuids[int(deps_index[i % nb_uuids])]
+				assigned[uuids[i % nb_uuids]] = (int(sizes[i % nb_uuids]), uuids[i % nb_uuids])
 			amap.append(line)
 
-		for line in amap:
-			if line['dep'] not in uuids:
-				print "You messed up something - dependency is not another request"
+#		for line in amap:
+#			if line['dep'] not in uuids:
+#				print "You messed up something - dependency is not another request"
 
 		self.dump_amap(amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf)		
 

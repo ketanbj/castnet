@@ -12,6 +12,8 @@ class Generator:
 		self.imap = imap
 		self.debug = False
 		self.zipf_distr_param = 4
+		self.normal_loc = 0
+		self.normal_scale = 1
 
 	def ticking(self):
 		sys.stdout.write("/")
@@ -91,7 +93,7 @@ class Generator:
 		if sd == 'random':
 			loc_indexes = np.random.randint(0,l_imap, int(sf) * l_imap)
 		elif sd == 'gaussian':
-			loc_indexes = np.random.normal(1,1,int(sf)*l_imap)
+			loc_indexes = np.random.normal(self.normal_loc,self.normal_scale,int(sf)*l_imap)
 			offset = abs(np.min(loc_indexes))
 			s_indexes = np.add(loc_indexes, offset)
 		elif sd == 'zipfian':
@@ -110,7 +112,7 @@ class Generator:
 		if td == 'random':
 			timestamps = np.random.randint(0, 86400, int(sf)*l_imap)
 		elif td == 'gaussian':
-			timestamps = np.random.normal(1, 1, int(sf) * l_imap)
+			timestamps = np.random.normal(self.normal_loc, self.normal_scale, int(sf) * l_imap)
 			offset = abs(np.min(timestamps))
 			timestamps = np.add(timestamps, offset)
 			timestamps = np.remainder(timestamps, 86400)
@@ -125,7 +127,7 @@ class Generator:
 		if rd == 'random':
 			uuids = np.random.randint(0,nb_uuids, nb_uuids)
 		elif rd == 'gaussian':
-			uuids = np.random.normal(1,1,nb_uuids)
+			uuids = np.random.normal(self.normal_loc,self.normal_scale,nb_uuids)
 			offset = abs(np.min(uuids))
 			uuids = np.add(uuids, offset)
 		elif rd == 'zipfian':
@@ -138,7 +140,7 @@ class Generator:
 		if zd == 'random':
 			sizes = np.random.randint(1,int(zf), nb_uuids)
 		elif zd == 'gaussian':
-			sizes = np.random.normal(1,1,nb_uuids)
+			sizes = np.random.normal(self.normal_loc,self.normal_scale,nb_uuids)
 			offset = abs(np.min(sizes))
 			sizes = np.add(sizes, offset+1)
 			sizes = np.remainder(sizes,int(zf))

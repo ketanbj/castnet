@@ -196,8 +196,12 @@ class Generator:
 
 	def dump_amap(self, amap, sd,sf,td,tf,zd,zf,dd,df,rd,rf):
 		dump_name = 'amaps/amap_' + sd[0]+sf+td[0]+tf+zd[0]+zf[0]+dd[0]+df+rd[0]+rf
+		
 		with open(dump_name, 'wt') as amap_dump:
-			json.dump(amap,amap_dump)
+			for line in amap:
+				json.dump(line,amap_dump)
+				amap_dump.write("\n")
+			#json.dump(amap,amap_dump,indent=0, cls=NoIndentEncoder)
 		#print "written amap in ", dump_name
 
 

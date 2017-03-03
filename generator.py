@@ -11,7 +11,11 @@ class Generator:
 	def __init__(self, imap):
 		self.imap = imap
 		self.debug = False
-		self.zipf_distr_param = 4
+		self.zipf_distr_param = 1
+		self.normal_loc_t = 43200
+		self.normal_scale_t = 10800
+		self.normal_loc_u = 43200
+		self.normal_scale_u = 10800
 		self.normal_loc = 0
 		self.normal_scale = 1
 
@@ -80,7 +84,8 @@ class Generator:
 		l_imap = len(self.imap)
 		#print "Number of i locations: ", l_imap
 		amap = []		
-		nb_uuids = (int(sf)*l_imap)/int(rf)
+		total_requests = int(sf)*l_imap
+		unique_requests = total_requests/int(rf)
 		if(self.debug):
 			print "Generating for conf: "
 			print "Spatial: " + sd +'_' + sf
@@ -91,18 +96,19 @@ class Generator:
 
 		loc_indexes = []
 		if sd == 'random':
-			loc_indexes = np.random.randint(0,l_imap, int(sf) * l_imap)
+			loc_indexes = np.random.randint(0,l_imap, total_requests)
 		elif sd == 'gaussian':
-			loc_indexes = np.random.normal(self.normal_loc,self.normal_scale,int(sf)*l_imap)
-			offset = abs(np.min(loc_indexes))
-			s_indexes = np.add(loc_indexes, offset)
+			loc_indexes = np.random.normal(l_imap/2,l_imap/20,total_requests)
+			#offset = abs(np.min(loc_indexes))
+			#loc_indexes = np.remainder(loc_indexes, l_imap)
 		elif sd == 'zipfian':
-			loc_indexes = np.random.zipf(self.zipf_distr_param,int(sf)*l_imap)
-			loc_indexes = np.remainder(loc_indexes,l_imap-1)
+			loc_indexes = np.random.zipf(self.zipf_distr_param,total_requests)
+			#loc_indexes = np.remainder(loc_indexes,l_imap-1)
 			#print loc_indexes
 		else:
 			print "Unsupported spatial distribution"
 			exit()
+		print "loc indexes: ", len(loc_indexes)
 
 		show_distributions= False
 		if(show_distributions):
@@ -110,78 +116,89 @@ class Generator:
 
 		timestamps = []
 		if td == 'random':
-			timestamps = np.random.randint(0, 86400, int(sf)*l_imap)
+			timestamps = np.random.randint(0, 86400, total_requests)
 		elif td == 'gaussian':
-			timestamps = np.random.normal(self.normal_loc, self.normal_scale, int(sf) * l_imap)
-			offset = abs(np.min(timestamps))
-			timestamps = np.add(timestamps, offset)
-			timestamps = np.remainder(timestamps, 86400)
+			timestamps = np.random.normal(self.normal_loc_t, self.normal_scale_t, total_requests)
+			#offset = abs(np.min(timestamps))
+			#timestamps = np.add(timestamps, offset)
+			#timestamps = np.remainder(timestamps, 86400)
 		elif td == 'zipfian':
 			timestamps = np.random.zipf(self.zipf_distr_param, int(sf) * l_imap)
 			timestamps = np.remainder(timestamps, 86400) 
 		else:
 			print "Unsupported temporal distribution"	
 			exit()
+		print "timestamps: ",len(timestamps)
 
-		uuids = []
+		uuids = range(0,unique_requests)
 		if rd == 'random':
-			uuids = np.random.randint(0,nb_uuids, nb_uuids)
+			uuids = np.random.randint(0,unique_requests, unique_requests)
 		elif rd == 'gaussian':
-			uuids = np.random.normal(self.normal_loc,self.normal_scale,nb_uuids)
-			offset = abs(np.min(uuids))
-			uuids = np.add(uuids, offset)
+			uuids = np.random.normal(unique_requests/2,unique_requests/20,unique_requests)
+			#offset = abs(np.min(uuids))
+			#uuids = np.add(uuids, offset)
 		elif rd == 'zipfian':
-			uuids = np.random.zipf(self.zipf_distr_param, nb_uuids)
+			uuids = np.random.zipf(self.zipf_distr_param, unique_requests)
 		else:
 			print "Unsupported redundancy dstribution"
 			exit()
+		print "uuids: ", len(uuids)
 		
 		sizes = []
 		if zd == 'random':
-			sizes = np.random.randint(1,int(zf), nb_uuids)
+			sizes = np.random.randint(1,int(zf), unique_requests)
 		elif zd == 'gaussian':
-			sizes = np.random.normal(self.normal_loc,self.normal_scale,nb_uuids)
-			offset = abs(np.min(sizes))
-			sizes = np.add(sizes, offset+1)
-			sizes = np.remainder(sizes,int(zf))
+			sizes = np.random.normal(int(zf)/2,int(zf)/20,unique_requests)
+			#offset = abs(np.min(sizes))
+			#sizes = np.add(sizes, offset+1)
+			#sizes = np.remainder(sizes,int(zf))
 		elif zd == 'zipfian':
-			sizes = np.random.zipf(self.zipf_distr_param, nb_uuids)
-			sizes = np.remainder(sizes,int(zf))
-			sizes = np.add(sizes,1)
+			sizes = np.random.zipf(self.zipf_distr_param, unique_requests)
+			#sizes = np.remainder(sizes,int(zf))
+			#sizes = np.add(sizes,1)
 		else:
 			print "Unsupported size dstribution"
 			exit()
+		print "sizes: ",len(sizes)
 		
 #		deps_index = []
 #		if dd == 'random':
-#			deps_index = np.random.randint(0,nb_uuids, nb_uuids)
+#			deps_index = np.random.randint(0,unique_requests, unique_requests)
 #		elif dd == 'gaussian':
-#			deps_index = np.random.normal(1,1,nb_uuids)
+#			deps_index = np.random.normal(1,1,unique_requests)
 #			offset = abs(np.min(deps_index))
 #			deps_index = np.add(deps_index, offset)
 #		elif dd == 'zipfian':
-#			deps_index = np.random.zipf(self.zipf_distr_param, nb_uuids)
-#			deps_index = np.remainder(deps_index, nb_uuids)
+#			deps_index = np.random.zipf(self.zipf_distr_param, unique_requests)
+#			deps_index = np.remainder(deps_index, unique_requests)
 #		else:
 #			print "Unsupported dependency dstribution"
 #			exit()
-		
+		#print timestamps		
 		assigned = {}
-		for i in range(0, int(sf)*l_imap):
+		for i in range(0, total_requests):
 			line = {}
-			#print i
-			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i % nb_uuids])])
+			#print i % l_imap
+			#print l_imap
+			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i])])
 
-			line['time'] = int(timestamps[i % nb_uuids])
+			line['time'] = int(timestamps[i])
 			
-			line['uid'] = int(uuids[i % nb_uuids])
-			if uuids[i % nb_uuids] in assigned.keys():
-				line['size'] = assigned[uuids[i % nb_uuids]][0]
-#				line['dep'] = assigned[uuids[i % nb_uuids]][1]
-			else:
-				line['size'] = int(sizes[i % nb_uuids])
-#				line['dep'] = uuids[int(deps_index[i % nb_uuids])]
-				assigned[uuids[i % nb_uuids]] = (int(sizes[i % nb_uuids]), uuids[i % nb_uuids])
+			line['uid'] = int(uuids[i % unique_requests])
+			#if uuids[i % unique_requests] in assigned.keys():
+			try:
+				line['size'] = assigned[uuids[i % unique_requests]][0]
+				print assigned[uuids[i % unique_requests]][0], i % unique_requests
+#				line['dep'] = assigned[uuids[i % unique_requests]][1]
+			#else:
+			except:
+				print sizes[i % unique_requests], i % unique_requests
+				line['size'] = int(sizes[i % unique_requests])
+				assigned[uuids[i % unique_requests]] = (int(sizes[ i % unique_requests]), uuids[i % unique_requests])
+				#print "In exception"
+			#else:
+			#	line['size'] = int(sizes[i % unique_requests])
+#				line['dep'] = uuids[int(deps_index[i % unique_requests])]
 			amap.append(line)
 
 #		for line in amap:

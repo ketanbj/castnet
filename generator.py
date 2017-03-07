@@ -11,13 +11,9 @@ class Generator:
 	def __init__(self, imap):
 		self.imap = imap
 		self.debug = False
-		self.zipf_distr_param = 1
+		self.zipf_distr_param = 1.5
 		self.normal_loc_t = 43200
 		self.normal_scale_t = 10800
-		self.normal_loc_u = 43200
-		self.normal_scale_u = 10800
-		self.normal_loc = 0
-		self.normal_scale = 1
 
 	def ticking(self):
 		sys.stdout.write("/")
@@ -103,6 +99,7 @@ class Generator:
 		elif sd == 'zipfian':
 			loc_indexes = np.random.zipf(self.zipf_distr_param,total_requests)
 			loc_indexes = np.remainder(loc_indexes,l_imap-1)
+			loc_indexes = loc_indexes.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 			#print loc_indexes
 		else:
 			print "Unsupported spatial distribution"
@@ -111,8 +108,8 @@ class Generator:
 		uuids_set = set(loc_indexes)
 		print "nb locations: ", len(loc_indexes)
 		print "unique locations: ", len(uuids_set)
-
 		uuids = range(0,unique_requests)
+		uids = []
 		print "uuids ", len(uuids)
 		if rd == 'random':
 			uids = np.random.randint(0,unique_requests, total_requests)
@@ -122,7 +119,9 @@ class Generator:
 			#offset = abs(np.min(uuids))
 			#uuids = np.add(uuids, offset)
 		elif rd == 'zipfian':
-			uuids = np.random.zipf(self.zipf_distr_param, total_requests)
+			uids = np.random.zipf(self.zipf_distr_param, total_requests)
+			uids = np.remainder(uids,unique_requests)
+			loc_indexes = uids.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 		else:
 			print "Unsupported redundancy dstribution"
 			exit()
@@ -135,8 +134,8 @@ class Generator:
 			timestamps = np.random.normal(self.normal_loc_t, self.normal_scale_t, total_requests)
 			#timestamps = np.remainder(timestamps, 86400)
 		elif td == 'zipfian':
-			timestamps = np.random.zipf(self.zipf_distr_param, int(sf) * l_imap)
-			#timestamps = np.remainder(timestamps, 86400) 
+			timestamps = np.random.zipf(self.zipf_distr_param, total_requests)
+			timestamps = np.remainder(timestamps, 86400) 
 		else:
 			print "Unsupported temporal distribution"	
 			exit()
@@ -154,7 +153,7 @@ class Generator:
 			#sizes = np.remainder(sizes,int(zf))
 		elif zd == 'zipfian':
 			sizes = np.random.zipf(self.zipf_distr_param, unique_requests)
-			#sizes = np.remainder(sizes,int(zf))
+			sizes = np.remainder(sizes,int(zf))
 			#sizes = np.add(sizes,1)
 		else:
 			print "Unsupported size dstribution"

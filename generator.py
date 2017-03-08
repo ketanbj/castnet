@@ -100,7 +100,6 @@ class Generator:
 			loc_indexes = np.random.zipf(self.zipf_distr_param,total_requests)
 			loc_indexes = np.remainder(loc_indexes,l_imap-1)
 			loc_indexes = loc_indexes.astype(np.int64) #np.remainder(loc_indexes, l_imap)
-			#print loc_indexes
 		else:
 			print "Unsupported spatial distribution"
 			exit()
@@ -121,7 +120,7 @@ class Generator:
 		elif rd == 'zipfian':
 			uids = np.random.zipf(self.zipf_distr_param, total_requests)
 			uids = np.remainder(uids,unique_requests)
-			loc_indexes = uids.astype(np.int64) #np.remainder(loc_indexes, l_imap)
+			uids = uids.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 		else:
 			print "Unsupported redundancy dstribution"
 			exit()

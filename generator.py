@@ -14,6 +14,7 @@ class Generator:
 		self.zipf_distr_param = 1.5
 		self.normal_loc_t = 43200
 		self.normal_scale_t = 10800
+		self.normal_stddev_factor = 10
 
 	def ticking(self):
 		sys.stdout.write("/")
@@ -94,7 +95,7 @@ class Generator:
 		if sd == 'random':
 			loc_indexes = np.random.randint(0,l_imap, total_requests)
 		elif sd == 'gaussian':
-			loc_indexes = np.random.normal(l_imap/2,l_imap/20,total_requests)
+			loc_indexes = np.random.normal(l_imap/2,l_imap/self.normal_stddev_factor,total_requests)
 			loc_indexes = loc_indexes.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 		elif sd == 'zipfian':
 			loc_indexes = np.random.zipf(self.zipf_distr_param,total_requests)
@@ -113,7 +114,7 @@ class Generator:
 		if rd == 'random':
 			uids = np.random.randint(0,unique_requests, total_requests)
 		elif rd == 'gaussian':
-			uids = np.random.normal(unique_requests/2,unique_requests/20,total_requests)
+			uids = np.random.normal(unique_requests/2,unique_requests/self.normal_stddev_factor,total_requests)
 			uids = uids.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 			#offset = abs(np.min(uuids))
 			#uuids = np.add(uuids, offset)
@@ -145,7 +146,7 @@ class Generator:
 		if zd == 'random':
 			sizes = np.random.randint(1,int(zf), unique_requests)
 		elif zd == 'gaussian':
-			sizes = np.random.normal(int(zf)/2,int(zf)/20,unique_requests)
+			sizes = np.random.normal(int(zf)/2,int(zf)/self.normal_stddev_factor,unique_requests)
 			sizes = sizes.astype(np.int64) #np.remainder(loc_indexes, l_imap)
 			#offset = abs(np.min(sizes))
 			#sizes = np.add(sizes, offset+1)

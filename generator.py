@@ -179,7 +179,7 @@ class Generator:
 			line = {}
 			#print i % l_imap
 			#print l_imap
-			line['loc'] = self.create_random_point(self.imap[int(loc_indexes[i])])
+			line['loc'] = self.imap[int(loc_indexes[i])]
 
 			line['time'] = int(timestamps[i])
 			
